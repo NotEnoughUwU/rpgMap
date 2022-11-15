@@ -29,12 +29,30 @@ namespace rpgMap
         // ~ = water
         // * = trees
 
+        static char[,] dragon = new char[,]
+        {
+            {'X','o','X'},
+            {'>','O','<'},
+            {'X','V','X'},
+        };
+        static int dragonX;
+        static int dragonY;
+        static int dragonSubX;
+        static int dragonSubY;
+        static char[,] dragonCovers = new char[,]
+        {
+            {'X','X','X'},
+            {'X','X','X'},
+            {'X','X','X'},
+        };
+        static bool dragonMoved;
+
         static int mapScale;
 
         static int playerX;
         static int playerY;
-        static int subX;
-        static int subY;
+        static int playerSubX;
+        static int playerSubY;
 
         static char player = '☻';
         
@@ -43,6 +61,7 @@ namespace rpgMap
             ClearInputBuffer();
             SetScale();
             InitPlayer();
+            InitDragon();
             InputLoop();
             Console.ReadKey(true);
         }
@@ -165,14 +184,14 @@ namespace rpgMap
         {
             playerX = 7;
             playerY = 6;
-            subX = 0;
-            subY = 0;
+            playerSubX = 0;
+            playerSubY = 0;
             SetPlayerPos();
         }
 
         static void SetPlayerPos()
         {
-            Console.SetCursorPosition((playerX + 1) * mapScale - subX, (playerY + 1) * mapScale - subY);
+            Console.SetCursorPosition((playerX + 1) * mapScale - playerSubX, (playerY + 1) * mapScale - playerSubY);
             SetColour(playerX, playerY);
             Console.ForegroundColor = ConsoleColor.Black;
             Console.Write(player);
@@ -205,23 +224,25 @@ namespace rpgMap
                         MoveRight();
                         break;
                 }
+
+                DragonAI();
             }
         }
 
         static void MoveUp()
         {
             FillOldPos();
-            subY++;
-            if (subY < 0 || subY >= mapScale)
+            playerSubY++;
+            if (playerSubY < 0 || playerSubY >= mapScale)
             {
-                if (playerY - 1 <= map.GetLength(1) * -1 || TestCollisionUp())
+                if (TestCollisionUp())
                 {
-                    subY--;
+                    playerSubY--;
                     SetPlayerPos();
                     return;
                 }
 
-                subY = 0;
+                playerSubY = 0;
                 playerY--;
             }
             SetPlayerPos();
@@ -229,17 +250,17 @@ namespace rpgMap
         static void MoveDown()
         {
             FillOldPos();
-            subY--;
-            if (subY < 0 || subY >= mapScale)
+            playerSubY--;
+            if (playerSubY < 0 || playerSubY >= mapScale)
             {
-                if (playerY + 1 >= map.GetLength(0) || TestCollisionDown())
+                if (TestCollisionDown())
                 {
-                    subY++;
+                    playerSubY++;
                     SetPlayerPos();
                     return;
                 }
 
-                subY = mapScale - 1;
+                playerSubY = mapScale - 1;
                 playerY++;
             }
             SetPlayerPos();
@@ -247,17 +268,17 @@ namespace rpgMap
         static void MoveLeft()
         {
             FillOldPos();
-            subX++;
-            if (subX < 0 || subX >= mapScale)
+            playerSubX++;
+            if (playerSubX < 0 || playerSubX >= mapScale)
             {
-                if (playerX - 1 <= map.GetLength(0) * -1 || TestCollisionLeft())
+                if (TestCollisionLeft())
                 {
-                    subX--;
+                    playerSubX--;
                     SetPlayerPos();
                     return;
                 }
 
-                subX = 0;
+                playerSubX = 0;
                 playerX--;
             }
             SetPlayerPos();
@@ -265,17 +286,17 @@ namespace rpgMap
         static void MoveRight()
         {
             FillOldPos();
-            subX--;
-            if (subX < 0 || subX >= mapScale || TestCollisionRight())
+            playerSubX--;
+            if (playerSubX < 0 || playerSubX >= mapScale)
             {
-                if (playerX + 1 >= map.GetLength(1))
+                if (TestCollisionRight())
                 {
-                    subX++;
+                    playerSubX++;
                     SetPlayerPos();
                     return;
                 }
 
-                subX = mapScale - 1;
+                playerSubX = mapScale - 1;
                 playerX++;
             }
             SetPlayerPos();
@@ -283,54 +304,177 @@ namespace rpgMap
 
         static bool TestCollisionUp()
         {
-            switch (map[playerY - 1, playerX])
+            try
             {
-                case '^':
-                case '~':
-                    return true;
-                default:
-                    return false;
+                switch (map[playerY - 1, playerX])
+                {
+                    case '^':
+                    case '~':
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+            catch (Exception)
+            {
+                return true;
             }
         }
         static bool TestCollisionDown()
         {
-            switch (map[playerY + 1, playerX])
+            try
             {
-                case '^':
-                case '~':
-                    return true;
-                default:
-                    return false;
+                switch (map[playerY + 1, playerX])
+                {
+                    case '^':
+                    case '~':
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+            catch (Exception)
+            {
+                return true;
             }
         }
         static bool TestCollisionLeft()
         {
-            switch (map[playerY, playerX - 1])
+            try
             {
-                case '^':
-                case '~':
-                    return true;
-                default:
-                    return false;
+                switch (map[playerY, playerX - 1])
+                {
+                    case '^':
+                    case '~':
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+            catch (Exception)
+            {
+                return true;
             }
         }
         static bool TestCollisionRight()
         {
-            switch (map[playerY, playerX + 1])
+            try
             {
-                case '^':
-                case '~':
-                    return true;
-                default:
-                    return false;
+                switch (map[playerY, playerX + 1])
+                {
+                    case '^':
+                    case '~':
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+            catch (Exception)
+            {
+                return true;
             }
         }
 
         static void FillOldPos()
         {
-            Console.SetCursorPosition((playerX + 1) * mapScale - subX, (playerY + 1) * mapScale - subY);
+            Console.SetCursorPosition((playerX + 1) * mapScale - playerSubX, (playerY + 1) * mapScale - playerSubY);
             Console.ForegroundColor = ConsoleColor.White;
             Console.Write(map[playerY, playerX]);
+        }
+
+        static void InitDragon()
+        {
+            dragonX = 20;
+            dragonY = 8;
+            dragonSubX = 0;
+            dragonSubY = 0;
+            SetDragonPos();
+            dragonMoved = true;
+        }
+
+        static void SetDragonPos()
+        {
+            Console.SetCursorPosition((dragonX + 1) * mapScale - dragonSubX, (dragonY + 1) * mapScale - dragonSubY);
+            DrawDragon();
+        }
+
+        static void DrawDragon()
+        {
+            Console.ForegroundColor = ConsoleColor.DarkRed;
+
+            for (int i = 0; i < dragon.GetLength(0); i++)
+            {
+                for (int j = 0; j < dragon.GetLength(1); j++)
+                {
+                    Console.SetCursorPosition((dragonX + 1) * mapScale - dragonSubX + i, (dragonY + 1) * mapScale - dragonSubY + j);
+
+                    if (dragon[j, i] != 'X')
+                    {
+                        Console.Write(dragon[j, i]);
+                    }
+                }
+            }
+        }
+
+        static void DragonLeft()
+        {
+            dragonSubX++;
+            if (dragonSubX < 0 || dragonSubX >= mapScale)
+            {
+                dragonSubX = 0;
+                dragonX--;
+            }
+            SetDragonPos();
+        }
+        static void DragonRight()
+        {
+            dragonSubX--;
+            if (dragonSubX < 0 || dragonSubX >= mapScale)
+            {
+                dragonSubX = mapScale - 1;
+                dragonX++;
+            }
+            SetDragonPos();
+        }
+        static void DragonUp()
+        {
+            dragonSubY++;
+            if (dragonSubY < 0 || dragonSubY >= mapScale)
+            {
+                dragonSubY = 0;
+                dragonY--;
+            }
+            SetDragonPos();
+        }
+        static void DragonDown()
+        {
+            dragonSubY--;
+            if (dragonSubY < 0 || dragonSubY >= mapScale)
+            {
+                dragonSubY = mapScale - 1;
+                dragonY++;
+            }
+            SetDragonPos();
+        }
+
+        static void DragonAI()
+        {
+            if (dragonMoved)
+            {
+                dragonMoved = false;
+                return;
+            }
+
+            if (playerX > dragonX)
+                DragonRight();
+            else if (playerX < dragonX)
+                DragonLeft();
+            else if (playerY > dragonY)
+                DragonDown();
+            else if (playerY < dragonY)
+                DragonUp();
+
+            dragonMoved = true;
         }
     }
 }
