@@ -29,23 +29,12 @@ namespace rpgMap
         // ~ = water
         // * = trees
 
-        static char[,] dragon = new char[,]
-        {
-            {'X','o','X'},
-            {'>','O','<'},
-            {'X','V','X'},
-        };
-        static int dragonX;
-        static int dragonY;
-        static int dragonSubX;
-        static int dragonSubY;
-        static char[,] dragonCovers = new char[,]
-        {
-            {'X','X','X'},
-            {'X','X','X'},
-            {'X','X','X'},
-        };
-        static bool dragonMoved;
+        static char goblin = '☺';
+        static int goblinX;
+        static int goblinY;
+        static int goblinSubX;
+        static int goblinSubY;
+        static bool goblinMoved;
 
         static int mapScale;
 
@@ -56,7 +45,7 @@ namespace rpgMap
 
         static char player = '☻';
         
-        static void Main(string[] args)
+        static void Main()
         {
             ClearInputBuffer();
             SetScale();
@@ -225,8 +214,11 @@ namespace rpgMap
                         break;
                 }
 
-                DragonAI();
+                GoblinAI();
+                if (TestPlayerDie())
+                    break;
             }
+            Main();
         }
 
         static void MoveUp()
@@ -379,102 +371,138 @@ namespace rpgMap
         {
             Console.SetCursorPosition((playerX + 1) * mapScale - playerSubX, (playerY + 1) * mapScale - playerSubY);
             Console.ForegroundColor = ConsoleColor.White;
+            SetColour(playerX, playerY);
             Console.Write(map[playerY, playerX]);
         }
 
         static void InitDragon()
         {
-            dragonX = 20;
-            dragonY = 8;
-            dragonSubX = 0;
-            dragonSubY = 0;
-            SetDragonPos();
-            dragonMoved = true;
+            goblinX = 20;
+            goblinY = 8;
+            goblinSubX = 0;
+            goblinSubY = 0;
+            SetGoblinPos();
+            goblinMoved = true;
         }
 
-        static void SetDragonPos()
+        static void SetGoblinPos()
         {
-            Console.SetCursorPosition((dragonX + 1) * mapScale - dragonSubX, (dragonY + 1) * mapScale - dragonSubY);
-            DrawDragon();
+            Console.SetCursorPosition((goblinX + 1) * mapScale - goblinSubX, (goblinY + 1) * mapScale - goblinSubY);
+            Console.ForegroundColor = ConsoleColor.DarkMagenta;
+            Console.Write(goblin);
         }
 
-        static void DrawDragon()
+        static void GoblinLeft()
         {
-            Console.ForegroundColor = ConsoleColor.DarkRed;
+            GoblinFillOldPos();
 
-            for (int i = 0; i < dragon.GetLength(0); i++)
+            goblinSubX++;
+            if (goblinSubX < 0 || goblinSubX >= mapScale)
             {
-                for (int j = 0; j < dragon.GetLength(1); j++)
-                {
-                    Console.SetCursorPosition((dragonX + 1) * mapScale - dragonSubX + i, (dragonY + 1) * mapScale - dragonSubY + j);
-
-                    if (dragon[j, i] != 'X')
-                    {
-                        Console.Write(dragon[j, i]);
-                    }
-                }
+                goblinSubX = 0;
+                goblinX--;
             }
+            SetGoblinPos();
+        }
+        static void GoblinRight()
+        {
+            GoblinFillOldPos();
+
+            goblinSubX--;
+            if (goblinSubX < 0 || goblinSubX >= mapScale)
+            {
+                goblinSubX = mapScale - 1;
+                goblinX++;
+            }
+            SetGoblinPos();
+        }
+        static void GoblinUp()
+        {
+            GoblinFillOldPos();
+
+            goblinSubY++;
+            if (goblinSubY < 0 || goblinSubY >= mapScale)
+            {
+                goblinSubY = 0;
+                goblinY--;
+            }
+            SetGoblinPos();
+        }
+        static void GoblinDown()
+        {
+            GoblinFillOldPos();
+
+            goblinSubY--;
+            if (goblinSubY < 0 || goblinSubY >= mapScale)
+            {
+                goblinSubY = mapScale - 1;
+                goblinY++;
+            }
+            SetGoblinPos();
         }
 
-        static void DragonLeft()
+        static void GoblinFillOldPos()
         {
-            dragonSubX++;
-            if (dragonSubX < 0 || dragonSubX >= mapScale)
-            {
-                dragonSubX = 0;
-                dragonX--;
-            }
-            SetDragonPos();
-        }
-        static void DragonRight()
-        {
-            dragonSubX--;
-            if (dragonSubX < 0 || dragonSubX >= mapScale)
-            {
-                dragonSubX = mapScale - 1;
-                dragonX++;
-            }
-            SetDragonPos();
-        }
-        static void DragonUp()
-        {
-            dragonSubY++;
-            if (dragonSubY < 0 || dragonSubY >= mapScale)
-            {
-                dragonSubY = 0;
-                dragonY--;
-            }
-            SetDragonPos();
-        }
-        static void DragonDown()
-        {
-            dragonSubY--;
-            if (dragonSubY < 0 || dragonSubY >= mapScale)
-            {
-                dragonSubY = mapScale - 1;
-                dragonY++;
-            }
-            SetDragonPos();
+            Console.SetCursorPosition((goblinX + 1) * mapScale - goblinSubX, (goblinY + 1) * mapScale - goblinSubY);
+            Console.ForegroundColor = ConsoleColor.White;
+            SetColour(goblinX, goblinY);
+            Console.Write(map[goblinY, goblinX]);
         }
 
-        static void DragonAI()
+        static void GoblinAI()
         {
-            if (dragonMoved)
+            if (goblinMoved)
             {
-                dragonMoved = false;
+                goblinMoved = false;
                 return;
             }
 
-            if (playerX > dragonX)
-                DragonRight();
-            else if (playerX < dragonX)
-                DragonLeft();
-            else if (playerY > dragonY)
-                DragonDown();
-            else if (playerY < dragonY)
-                DragonUp();
+            if (playerX > goblinX)
+                GoblinRight();
+            else if (playerX < goblinX)
+                GoblinLeft();
+            else if (playerY > goblinY)
+                GoblinDown();
+            else if (playerY < goblinY)
+                GoblinUp();
+            else if (playerX == goblinX && playerY == goblinY)
+            {
+                if (playerSubX > goblinSubX)
+                    GoblinRight();
+                else if (playerSubX < goblinSubX)
+                    GoblinLeft();
+                else
+                {
+                    if (playerSubY > goblinSubY)
+                        GoblinDown();
+                    else if (playerSubY < goblinSubY)
+                        GoblinUp();
+                }
+            }
 
-            dragonMoved = true;
+            goblinMoved = true;
+        }
+
+        static bool TestPlayerDie()
+        {
+            if (playerX == goblinX && playerY == goblinY && playerSubX == goblinSubX && playerSubY == goblinSubY)
+            {
+                GameOver();
+                return true;
+            }
+            return false;
+        }
+        static void GameOver()
+        {
+            Console.BackgroundColor = ConsoleColor.Black;
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.Clear();
+            Console.SetCursorPosition(0,0);
+            Console.WriteLine();
+            Console.WriteLine("GAME OVER");
+            Console.WriteLine("Press any button to play again");
+            Console.ReadKey(true);
+            Console.Clear();
         }
     }
 }
